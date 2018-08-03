@@ -1,0 +1,184 @@
+<html>
+    <head>
+            <style>
+                    /* #map {
+                      height: 80%;
+                      width: 80%;
+                     } */
+                  </style>
+                  <script src="https://www.gstatic.com/firebasejs/4.10.1/firebase-app.js"></script>
+                  <script src="https://www.gstatic.com/firebasejs/4.10.1/firebase-firestore.js"></script>
+                  
+                  <script>
+                      // Initialize Firebase
+                      // TODO: Replace with your project's customized code snippet
+                
+                      var config = {
+                        apiKey: "AIzaSyAJYfNfeuDpFqNacL6Ah1yPPOGUmkf77u8",
+                        authDomain: "vbb-dev.firebaseapp.com",
+                        projectId: "vbb-dev"
+                      };
+                      firebase.initializeApp(config);
+                      var db = firebase.firestore();
+                
+                </script>  
+              
+    </head>
+<body>
+<!-- <h3>Tracking GPS BOX</h3> -->
+    <style>
+      *{
+        margin: 0;
+        padding: 0;
+      }
+        .map_frame{
+          position: absolute;
+          /* top: 0; */
+          /* left: 0; */
+          width: 100% !important;
+          height: 100% !important;
+        }
+
+    </style>
+    <div id="map" class="map_frame"></div>
+    
+  <script>
+      var map_loc = {lat: -25.363, lng: 131.044};
+      var marker;
+      var map;
+      var acc_x  = 'NA';
+      var acc_y  = 'NA';
+      var acc_z  = 'NA';
+
+      var gyro_x  = 'NA';
+      var gyro_y  = 'NA';
+      var gyro_z  = 'NA';
+
+      var speed = 'NA';
+      var infoWindows = [];
+      
+      function initMap() {
+        // var uluru = {lat: -25.363, lng: 131.044};
+        map = new google.maps.Map(document.getElementById('map'), {
+          zoom: 18,
+          center: map_loc
+        });
+        // set_marker(map_loc,"Intial Location")
+        marker = new google.maps.Marker({
+          position: map_loc,
+          map: map,
+          title: "Vehicle 0 Location",
+          icon: 'icons8-car-26-g.png',
+          draggable: true
+        });
+        marker.setMap(map);
+
+      };
+
+      function set_marker(position,description){
+        marker.setPosition(position);
+        for (var i = 0; i < infoWindows.length; i++) {
+				  infoWindows[i].close();
+				}
+        var infoWindow = new google.maps.InfoWindow();
+        infoWindow.setContent("<div style = 'width:150px;min-height:100px'>" + description + "</div>");
+        infoWindow.open(map, marker);
+        infoWindows.push(infoWindow);
+        map.setCenter(position);        
+      };
+
+
+    function loadMap() {
+      var docRef = db.collection("tracker").doc("NbwToKRcJENiLOFl3wL0");
+
+      docRef.get().then(function(doc) {
+        if (doc.exists) {
+              console.log("Document data:", doc.data());
+              map_loc = {lat: doc.data()['device_data']['latitude'], lng: doc.data()['device_data']['longitude'] };
+              // console.log("map Loc: ", map_loc);
+          } else {
+              // doc.data() will be undefined in this case
+              console.log("No such document!");
+          }
+          initMap()
+
+      }).catch(function(error) {
+          console.log("Error getting document:", error);
+      });      
+
+
+
+      docRef.onSnapshot(function(doc) {
+          if (doc.exists) {
+            console.log("Document data:", doc.data());
+            if (doc.data()['device_data']['latitude'] && doc.data()['device_data']['longitude']){
+              map_loc = {lat: doc.data()['device_data']['latitude'], lng: doc.data()['device_data']['longitude'] };
+            
+              console.log("map Loc: ", map_loc);
+            }
+              // initMap()
+            var  acc_x  = 'NA';
+            var  acc_y  = 'NA';
+            var  acc_z  = 'NA';
+
+            var  gyro_x  = 'NA';
+            var  gyro_y  = 'NA';
+            var  gyro_z  = 'NA';
+
+            var speed = 'NA';
+            var c_speed = 'NA';
+            var imei_val = 'IMEI';
+
+            if ( doc.data()['device_data']['A'] ){
+              imei_val = doc.data()['device_data']['A'];
+            }
+
+            if (doc.data()['device_data']['Acc_X'] ){
+              acc_x  = String(doc.data()['device_data']['Acc_X']);
+            }
+            if (doc.data()['device_data']['Acc_Y'] ){
+              acc_y  = String(doc.data()['device_data']['Acc_Y']);
+            }
+            if ( doc.data()['device_data']['Acc_Z']){
+              acc_z  = String(doc.data()['device_data']['Acc_Z']);
+            }
+            if (doc.data()['device_data']['Gyro_X'] ){
+              gyro_x  = String(doc.data()['device_data']['Gyro_X']);
+            }
+            if ( doc.data()['device_data']['Gyro_Y']){
+              gyro_y  = String(doc.data()['device_data']['Gyro_Y']);
+            }
+            if ( doc.data()['device_data']['Gyro_Z']){
+              gyro_z  = String(doc.data()['device_data']['Gyro_Z']);
+            }
+            
+            if (doc.data()['device_data']['speed']){
+              speed = String(doc.data()['device_data']['speed']);
+              speed_2 = parseFloat(doc.data()['device_data']['speed']) * 2;
+              c_speed = speed_2.toString();
+            }
+
+            var desc_imei =  imei_val ;
+            // var desc_acc = "accl x =  " + acc_x + ", accl y = " + acc_y + ", accl z = " + acc_z ;
+            // var desc_gyr = "gyro x =  " + gyro_x + ", gyro y = " + gyro_y + ", gyro z = " + gyro_z ;
+            var desc_acc = "accl = (" + acc_x + "," + acc_y + "," + acc_z + ")" ;
+            var desc_gyr = "gyro = (" + gyro_x + "," + gyro_y + "," + gyro_z + ")" ;
+            var speed_desc = "speed = (" + speed + "," + c_speed + ")" ;
+            var desc = desc_imei + ", " + desc_acc + ", " + desc_gyr + ", " + speed_desc
+            // var desc = "Vehicle 2 "
+              set_marker(map_loc,desc);
+          } 
+      });      
+
+
+
+    }
+  </script>
+  
+
+  <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCw_2F7fuMSmc9-JI5yhVXFmhFX-QWwd4U&callback=loadMap">
+    </script>
+    
+   </body>
+</html>
